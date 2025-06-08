@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Server port="8005" shutdown="SHUTDOWN">
+  <Listener className="org.apache.catalina.startup.VersionLoggerListener"/>
+  <Listener className="org.apache.catalina.core.AprLifecycleListener" SSLEngine="on"/>
+  <Listener className="org.apache.catalina.core.JreMemoryLeakPreventionListener"/>
+  <Listener className="org.apache.catalina.mbeans.GlobalResourcesLifecycleListener"/>
+  <Listener className="org.apache.catalina.core.ThreadLocalLeakPreventionListener"/>
+
+  <Service name="Catalina">
+    <Connector port="8080"
+               maxThreads="100"
+               minSpareThreads="10"
+               connectionTimeout="20000"
+               enableLookups="false"
+               protocol="HTTP/1.1"
+               redirectPort="8443"
+               acceptCount="10"
+               secure="false"
+               scheme="http"
+               proxyName=""
+               proxyPort=""
+               relaxedPathChars="[]|"
+               relaxedQueryChars="[]|{}^\`&quot;&lt;&gt;"
+               bindOnInit="false"
+               maxHttpHeaderSize="8192"
+               useBodyEncodingForURI="true"
+               disableUploadTimeout="true" />
+
+    <Engine name="Catalina" defaultHost="localhost" jvmRoute="node1">
+        <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster">
+            <Channel className="org.apache.catalina.tribes.group.GroupChannel">
+                <Membership className="org.apache.catalina.tribes.membership.StaticMembershipService">
+                    <LocalMember className="org.apache.catalina.tribes.membership.StaticMember"
+                          port="4000"
+                          securePort="-1"
+                          host="172.21.0.3"
+                          domain="jira-cluster"
+                          uniqueId="{0,1,2,8,0,0,0,0,0,0,0,0,0,0,0,0}"/>
+                    <Member className="org.apache.catalina.tribes.membership.StaticMember"
+                          port="4000"
+                          securePort="-1"
+                          host="172.21.0.4"
+                          domain="jira-cluster"
+                          uniqueId="{0,1,2,9,0,0,0,0,0,0,0,0,0,0,0,0}"/>
+                </Membership>
+                <Receiver className="org.apache.catalina.tribes.transport.nio.NioReceiver"
+                          address="172.21.0.3"
+                          port="4000"
+                          autoBind="100"
+                          selectorTimeout="5000"
+                          maxThreads="6"/>
+                <Sender className="org.apache.catalina.tribes.transport.ReplicationTransmitter">
+                    <Transport className="org.apache.catalina.tribes.transport.nio.PooledParallelSender"/>
+                </Sender>
+                <Interceptor className="org.apache.catalina.tribes.group.interceptors.TcpFailureDetector"/>
+                <Interceptor className="org.apache.catalina.tribes.group.interceptors.MessageDispatchInterceptor"/>
+                <Interceptor className="org.apache.catalina.tribes.group.interceptors.ThroughputInterceptor"/>
+            </Channel>
+            <Valve className="org.apache.catalina.ha.tcp.ReplicationValve" filter=""/>
+            <Valve className="org.apache.catalina.ha.session.JvmRouteBinderValve" />
+            <ClusterListener className="org.apache.catalina.ha.session.ClusterSessionListener"/>
+        </Cluster>
+
+        <Host name="localhost" appBase="webapps" unpackWARs="true" autoDeploy="true">
+            <Context path="" docBase="${catalina.home}/atlassian-jira" reloadable="false" useHttpOnly="true">
+                <Resource name="UserTransaction"
+                    auth="Container"
+                    type="javax.transaction.UserTransaction"
+                    factory="org.objectweb.jotm.UserTransactionFactory"
+                    jotm.timeout="60"/>
+                <Manager pathname=""/>
+                <JarScanner scanManifest="false"/>
+                <Valve className="org.apache.catalina.valves.StuckThreadDetectionValve" threshold="120" />
+            </Context>
+        </Host>
+        
+        <Valve className="org.apache.catalina.valves.AccessLogValve"
+             pattern="%a %{jira.request.id}r %{jira.request.username}r %t &quot;%m %U%q %H&quot; %s %b %D &quot;%{Referer}i&quot; &quot;%{User-Agent}i&quot; &quot;%{jira.request.assession.id}r&quot;"
+             maxDays="-1"/>
+    </Engine>
+  </Service>
+</Server>

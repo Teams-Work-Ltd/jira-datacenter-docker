@@ -1,13 +1,14 @@
-version: '3.7'
-
 services:
   node1:
-    image: atlassian/jira-software:8.20.0
+    image: atlassian/jira-software:9.12.19
     ports:
-     - 9090:8080
+      - 9090:8080
     volumes:
       - ./jira-home-node1:/var/atlassian/application-data/jira:Z
       - ./jira-shared-home:/var/atlassian/jira-shared-home:z
+      - ./configs/server-node1.xml:/opt/atlassian/jira/conf/server.xml:ro
+      - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
+      - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
     environment:
       CATALINA_OPTS: -Datlassian.cluster.scale=true -DjvmRoute=node1
     ulimits:
@@ -15,13 +16,20 @@ services:
       nofile:
         soft: 65535
         hard: 65535
+    networks:
+      jira-network:
+        ipv4_address: 172.21.0.3
+
   node2:
-    image: atlassian/jira-software:8.20.0
+    image: atlassian/jira-software:9.12.19
     ports:
-     - 9091:8080
+      - 9091:8080
     volumes:
       - ./jira-home-node2:/var/atlassian/application-data/jira:Z
       - ./jira-shared-home:/var/atlassian/jira-shared-home:z
+      - ./configs/server-node2.xml:/opt/atlassian/jira/conf/server.xml:ro
+      - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
+      - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
     environment:
       CATALINA_OPTS: -Datlassian.cluster.scale=true -DjvmRoute=node2
     ulimits:
@@ -29,25 +37,33 @@ services:
       nofile:
         soft: 65535
         hard: 65535
+    networks:
+      jira-network:
+        ipv4_address: 172.21.0.4
 
-  # TODO replace with haproxy
-  # docker run -d --name my-running-haproxy -v /path/to/etc/haproxy:/usr/local/etc/haproxy:ro --sysctl net.ipv4.ip_unprivileged_port_start=0 haproxy:2.3
   proxy:
-    image: haproxy:2.3
+    image: haproxy:2.8
     ports:
-    - 80:80
-    - 443:443
-    volumes: 
+      - 80:80
+      - 443:443
+    volumes:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      - jira-network
 
   database:
     image: postgres:10.5-alpine
     volumes:
       - ./postgresql-data:/var/lib/postgresql/data:Z
       - ./postgre-db-init.sql:/docker-entrypoint-initdb.d/postgre-db-init.sql:Z
-    ports:
-     - 5432:5432
     environment:
       POSTGRES_PASSWORD: 1234
+    networks:
+      - jira-network
 
-
+networks:
+  jira-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
