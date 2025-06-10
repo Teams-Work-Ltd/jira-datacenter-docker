@@ -11,7 +11,7 @@ git clone https://github.com/fllaca/jira-datacenter-docker
 cd jira-datacenter-docker
 # this init script is necessary to change the permissions of the JIRA home folders so the JIRA daemon can write to them
 ./init.sh
-docker compose up -d database
+docker compose up -d database redis
 # wait a few seconds until database is ready, then:
 docker compose up -d node1
 ```
