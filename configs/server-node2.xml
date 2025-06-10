@@ -26,7 +26,7 @@
                useBodyEncodingForURI="true"
                disableUploadTimeout="true" />
 
-    <Engine name="Catalina" defaultHost="localhost" jvmRoute="node2">
+    <Engine name="Catalina" defaultHost="localhost">
         <Cluster className="org.apache.catalina.ha.tcp.SimpleTcpCluster">
             <Channel className="org.apache.catalina.tribes.group.GroupChannel">
                 <Membership className="org.apache.catalina.tribes.membership.StaticMembershipService">

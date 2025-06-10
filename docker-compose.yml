@@ -10,7 +10,7 @@ services:
       - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
       - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
     environment:
-      CATALINA_OPTS: -Datlassian.cluster.scale=true -DjvmRoute=node1
+      CATALINA_OPTS: -Datlassian.cluster.scale=true
     ulimits:
       nproc: 65535
       nofile:
@@ -31,7 +31,7 @@ services:
       - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
       - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
     environment:
-      CATALINA_OPTS: -Datlassian.cluster.scale=true -DjvmRoute=node2
+      CATALINA_OPTS: -Datlassian.cluster.scale=true
     ulimits:
       nproc: 65535
       nofile:
