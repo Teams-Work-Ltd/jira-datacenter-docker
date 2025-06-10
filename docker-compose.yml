@@ -6,9 +6,11 @@ services:
     volumes:
       - ./jira-home-node1:/var/atlassian/application-data/jira:Z
       - ./jira-shared-home:/var/atlassian/jira-shared-home:z
-      - ./configs/server-node1.xml:/opt/atlassian/jira/conf/server.xml:ro
       - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
       - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
+      - ./configs/redisson.conf:/opt/atlassian/jira/conf/redisson.conf:ro
+      - ./configs/redisson-all-3.13.6.jar:/opt/atlassian/jira/lib/redisson-all-3.13.6.jar
+      - ./configs/redisson-tomcat-9-3.13.6.jar:/opt/atlassian/jira/lib/redisson-tomcat-9-3.13.6.jar
     environment:
       CATALINA_OPTS: -Datlassian.cluster.scale=true
     ulimits:
@@ -27,9 +29,11 @@ services:
     volumes:
       - ./jira-home-node2:/var/atlassian/application-data/jira:Z
       - ./jira-shared-home:/var/atlassian/jira-shared-home:z
-      - ./configs/server-node2.xml:/opt/atlassian/jira/conf/server.xml:ro
       - ./configs/logging.properties:/opt/atlassian/jira/conf/logging.properties:ro
       - ./configs/context.xml:/opt/atlassian/jira/conf/context.xml:ro
+      - ./configs/redisson.conf:/opt/atlassian/jira/conf/redisson.conf:ro
+      - ./configs/redisson-all-3.13.6.jar:/opt/atlassian/jira/lib/redisson-all-3.13.6.jar
+      - ./configs/redisson-tomcat-9-3.13.6.jar:/opt/atlassian/jira/lib/redisson-tomcat-9-3.13.6.jar
     environment:
       CATALINA_OPTS: -Datlassian.cluster.scale=true
     ulimits:
@@ -50,6 +54,15 @@ services:
       - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
     networks:
       - jira-network
+
+  redis:
+    image: redis:alpine
+    hostname: redis
+    ports:
+      - 6379:6379
+    networks:
+      jira-network:
+        ipv4_address: 172.21.0.5
 
   database:
     image: postgres:10.5-alpine
